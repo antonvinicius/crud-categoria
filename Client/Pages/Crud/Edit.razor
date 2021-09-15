@@ -1,0 +1,67 @@
+﻿@page "/categorias/editar/{id:int}"
+
+@inject NavigationManager nav
+@inject HttpClient http
+
+<div class="container">
+    @if (categoria != null)
+    {
+        <Aviso @ref="aviso"></Aviso>
+        <div class="d-flex justify-content-between">
+            <h3>Criar Categoria</h3>
+            <p class="btn btn-outline-info" @onclick="@(() => nav.NavigateTo("categorias/index"))">Voltar</p>
+        </div>
+        <EditForm Model="categoria" OnValidSubmit="EditarCategoria">
+            <DataAnnotationsValidator />
+            <div class="form-group">
+                <label>Nome</label>
+                <InputText class="form-control" @bind-Value="categoria.Nome"></InputText>
+                <ValidationMessage For="() => categoria.Nome" />
+            </div>
+            <div class="form-group">
+                <button class="btn btn-success">Cadastrar</button>
+            </div>
+        </EditForm>
+    }
+    else
+    {
+        <Aviso Show="true" Class="alert-info" Message="Carregando..."></Aviso>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private bool _error;
+    private Aviso aviso;
+    private Categoria categoria = new Categoria();
+
+    async Task EditarCategoria()
+    {
+        try
+        {
+            if (_error)
+                throw new Exception();
+            await http.PutAsJsonAsync<Categoria>($"api/categorias/{Id}", categoria);
+            aviso.Mostrar("alert-success", "Categoria editada com sucesso!");
+            await Task.Delay(1000);
+            nav.NavigateTo("categorias/index");
+        }
+        catch (Exception)
+        {
+            aviso.Mostrar("alert-danger", "Ocorreu um erro ao tentar editar a categoria!");
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = nav.ToAbsoluteUri(nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("error", out var errorBolean))
+        {
+            _error = bool.Parse(errorBolean);
+        }
+
+        categoria = await http.GetFromJsonAsync<Categoria>($"api/categorias/{Id}");
+    }
+}

@@ -1,0 +1,57 @@
+﻿@page "/categorias/criar"
+
+@inject NavigationManager nav
+@inject HttpClient http
+
+
+
+<div class="container">
+    <Aviso @ref="aviso"></Aviso>
+    <div class="d-flex justify-content-between">
+        <h3>Criar Categoria</h3>
+        <p class="btn btn-outline-info" @onclick="@(() => nav.NavigateTo("categorias/index"))">Voltar</p>
+    </div>
+    <EditForm Model="categoria" OnValidSubmit="CadastrarCategoria">
+        <DataAnnotationsValidator />
+        <div class="form-group">
+            <label>Nome</label>
+            <InputText class="form-control" @bind-Value="categoria.Nome"></InputText>
+            <ValidationMessage For="() => categoria.Nome" />
+        </div>
+        <div class="form-group">
+            <button class="btn btn-success">Cadastrar</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private bool _error;
+    private Aviso aviso;
+    private Categoria categoria = new Categoria();
+
+    async Task CadastrarCategoria()
+    {
+        try
+        {
+            if (_error)
+                throw new Exception();
+            await http.PostAsJsonAsync<Categoria>("api/categorias", categoria);
+            aviso.Mostrar("alert-success", "Categoria criada com sucesso!");
+            await Task.Delay(1000);
+            nav.NavigateTo("categorias/index");
+        }
+        catch (Exception)
+        {
+            aviso.Mostrar("alert-danger", "Ocorreu um erro ao tentar cadastrar a categoria!");
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        var uri = nav.ToAbsoluteUri(nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("error", out var errorBolean))
+        {
+            _error = bool.Parse(errorBolean);
+        }
+    }
+}

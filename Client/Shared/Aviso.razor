@@ -1,0 +1,20 @@
+﻿@if (Show)
+{
+    <div class="alert @Class" role="alert">
+        @Message
+    </div>
+}
+
+@code {
+    [Parameter] public string Class { get; set; } = "alert-danger";
+    [Parameter] public string Message { get; set; }
+    [Parameter] public bool Show { get; set; }
+
+    public void Mostrar(string classTxt, string message)
+    {
+        Show = true;
+        Class = classTxt;
+        Message = message;
+        StateHasChanged();
+    }
+}

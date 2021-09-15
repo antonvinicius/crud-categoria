@@ -1,0 +1,55 @@
+﻿@page "/categorias/remover/{Id:int}"
+@inject HttpClient http
+@inject NavigationManager nav
+
+<div class="container">
+    @if (categoria != null)
+    {
+        <Aviso @ref="aviso"></Aviso>
+        <h1>@categoria.Nome</h1>
+        <p>Tem certeza que deseja excluir a categoria?</p>
+        <hr />
+        <button class="btn btn-outline-danger" @onclick="RemoverCategoria">Remover</button>
+        <a class="btn btn-outline-info" href="categorias/index">Voltar</a>
+    }
+    else
+    {
+        <Aviso Show="true" Message="Carregando..." Class="alert-info"></Aviso>
+    }
+</div>
+
+@code {
+    private bool _error;
+    private Aviso aviso;
+    [Parameter] public int Id { get; set; }
+
+    private Categoria categoria;
+    protected override async Task OnInitializedAsync()
+    {
+        categoria = await http.GetFromJsonAsync<Categoria>($"api/categorias/{Id}");
+
+        var uri = nav.ToAbsoluteUri(nav.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("error", out var errorBolean))
+        {
+            _error = bool.Parse(errorBolean);
+        }
+    }
+
+    async Task RemoverCategoria()
+    {
+        try
+        {
+            if (_error)
+                throw new Exception();
+
+            await http.DeleteAsync($"api/categorias/{Id}");
+            aviso.Mostrar("alert-success", "Categoria deletada!");
+            await Task.Delay(1000);
+            nav.NavigateTo("categorias/index");
+        }
+        catch (Exception)
+        {
+            aviso.Mostrar("alert-danger", "Ocorreu um erro ao tentar remover a categoria");
+        }
+    }
+}
